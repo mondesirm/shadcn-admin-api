@@ -1,12 +1,14 @@
-import prisma from '../../prisma/index.js'
+import prisma from '../prisma/index.js'
 import {
   taskSchema,
   taskBulkSchema,
-} from '../../src/features/tasks/data/schema.js'
-import { json } from '../_lib/json.js'
+} from '../src/features/tasks/data/schema.js'
+import { json } from './_lib/json.js'
 
-export async function GET() {
-  const tasks = await prisma.task.findMany()
+export async function GET(req: Request) {
+  const id = Number(new URL(req.url).searchParams.get('id'))
+
+  const tasks = await prisma.task.findMany(id ? { where: { id } } : undefined)
 
   const { success, error, data } = taskSchema.array().safeParse(tasks)
   if (!success) return json({ error }, { status: 500 })
@@ -26,7 +28,8 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
-  const body = await req.json()
+  const id = Number(new URL(req.url).searchParams.get('id'))
+  const body = Object.assign({}, await req.json(), id && { ids: [id] })
 
   const { success, error, data } = taskBulkSchema.update.safeParse(body)
   if (!success) return json({ error }, { status: 400 })
@@ -41,7 +44,8 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const body = await req.json()
+  const id = Number(new URL(req.url).searchParams.get('id'))
+  const body = id ? [id] : await req.json()
 
   const { success, error, data } = taskBulkSchema.delete.safeParse(body)
   if (!success) return json({ error }, { status: 400 })

@@ -16,7 +16,7 @@ export function TasksDialogs() {
     if (isLoading) return
     setIsLoading(true)
 
-    toast.promise(api.delete(`tasks/${currentRow?.id || ''}`), {
+    toast.promise(api.delete(`tasks?id=${currentRow?.id}`), {
       loading: 'Deleting task...',
       success: () => {
         setOpen(null)

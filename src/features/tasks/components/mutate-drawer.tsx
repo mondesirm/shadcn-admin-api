@@ -60,7 +60,7 @@ export function TasksMutateDrawer({
     setIsLoading(true)
 
     toast.promise(
-      api[isUpdate ? 'put' : 'post'](`tasks/${currentRow?.id || ''}`, task),
+      api[isUpdate ? 'put' : 'post'](`tasks?id=${currentRow?.id}`, task),
       {
         loading: (isUpdate ? 'Updating' : 'Creating') + ' task...',
         success: () => {

@@ -138,14 +138,15 @@ export function toCSV(
 }
 
 type Base = `${Lowercase<Prisma.ModelName>}s`
-type Path = Base | `${Base}/${number | ''}`
+type Path = Base | `${Base}?id=${string}`
 type Prop = symbol | Lowercase<Method> | 'import' | 'export'
-type Result<T> = T extends 'get' ? object[] : { count: number }
+type Result<T> = T extends 'get' ? object | object[] : Prisma.BatchPayload
 
 /**
  * Small helper that proxies axios HTTP-based methods
  *
  * The `import` method parses a CSV file or string into an array of objects
+ * The `export` method converts an array of objects into a CSV and triggers a download in the browser
  */
 export const api = new Proxy(axios, {
   get: (target, prop: Prop) => async (path: Path, data?: unknown) => {
@@ -156,5 +157,5 @@ export const api = new Proxy(axios, {
     return target(`/api/${path}`, { method, data }).then((res) => res.data)
   },
 }) as unknown as {
-  [M in Prop]: <D = unknown, R = Result<M>>(path: Path, data?: D) => Promise<R>
+  [M in Prop]: <D, R = Result<M>>(path: Path, data?: D) => Promise<R>
 }
