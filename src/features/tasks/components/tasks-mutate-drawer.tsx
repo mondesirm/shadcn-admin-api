@@ -22,7 +22,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { SelectDropdown } from '@/components/select-dropdown'
+import { SelectInput } from '@/components/form/select'
 import { type Task } from '../data/schema'
 
 type TaskMutateDrawerProps = {
@@ -106,9 +106,8 @@ export function TasksMutateDrawer({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status</FormLabel>
-                  <SelectDropdown
-                    defaultValue={field.value}
-                    onValueChange={field.onChange}
+                  <SelectInput
+                    {...field}
                     placeholder='Select dropdown'
                     items={[
                       { label: 'In Progress', value: 'in progress' },
