@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
 import {
   type SortingState,
@@ -23,22 +24,20 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
-import { priorities, statuses } from '../data/data'
+import { priorities, statuses } from '../data/items'
+import { tasks } from '../data/mock'
 import { type Task } from '../data/schema'
-import { DataTableBulkActions } from './data-table-bulk-actions'
-import { tasksColumns as columns } from './tasks-columns'
+import { TasksTableBulkActions } from './bulk-actions'
+import { columns } from './columns'
 
-const route = getRouteApi('/_authenticated/tasks/')
+const route = getRouteApi('/_authenticated/tasks')
 
-type DataTableProps = {
-  data: Task[]
-}
-
-export function TasksTable({ data }: DataTableProps) {
+export function TasksTable() {
   // Local UI-only states
-  const [rowSelection, setRowSelection] = useState({})
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [rowSelection, onRowSelectionChange] = useState({})
+  const [sorting, onSortingChange] = useState<SortingState>([])
+  const [columnVisibility, onColumnVisibilityChange] =
+    useState<VisibilityState>({})
 
   // Local state management for table (uncomment to use local-only state, not synced with URL)
   // const [globalFilter, onGlobalFilterChange] = useState('')
@@ -65,6 +64,11 @@ export function TasksTable({ data }: DataTableProps) {
     ],
   })
 
+  const { data } = useSuspenseQuery<Task[]>({
+    queryKey: ['tasks'],
+    queryFn: () => tasks,
+  })
+
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
@@ -78,9 +82,9 @@ export function TasksTable({ data }: DataTableProps) {
       pagination,
     },
     enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
-    onSortingChange: setSorting,
-    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange,
+    onSortingChange,
+    onColumnVisibilityChange,
     globalFilterFn: (row, _columnId, filterValue) => {
       const id = String(row.getValue('id')).toLowerCase()
       const title = String(row.getValue('title')).toLowerCase()
@@ -100,71 +104,61 @@ export function TasksTable({ data }: DataTableProps) {
   })
 
   const pageCount = table.getPageCount()
+
   useEffect(() => {
     ensurePageInRange(pageCount)
   }, [pageCount, ensurePageInRange])
 
   return (
-    <div
-      className={cn(
-        'max-sm:has-[div[role="toolbar"]]:mb-16', // Add margin bottom to the table on mobile when the toolbar is visible
-        'flex flex-1 flex-col gap-4'
-      )}
-    >
+    <div className='space-y-4 max-sm:has-[div[role="toolbar"]]:mb-16'>
       <DataTableToolbar
         table={table}
-        searchPlaceholder='Filter by title or ID...'
+        searchPlaceholder='Filter by ID or title...'
         filters={[
-          {
-            columnId: 'status',
-            title: 'Status',
-            options: statuses,
-          },
-          {
-            columnId: 'priority',
-            title: 'Priority',
-            options: priorities,
-          },
+          { columnId: 'status', title: 'Status', options: statuses },
+          { columnId: 'priority', title: 'Priority', options: priorities },
         ]}
       />
+
       <div className='overflow-hidden rounded-md border'>
-        <Table className='min-w-xl'>
+        <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead
-                      key={header.id}
-                      colSpan={header.colSpan}
-                      className={cn(
-                        header.column.columnDef.meta?.className,
-                        header.column.columnDef.meta?.thClassName
+            {table.getHeaderGroups().map((group) => (
+              <TableRow key={group.id} className='group/row'>
+                {group.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    colSpan={header.colSpan}
+                    className={cn(
+                      'bg-background transition-colors group-hover/row:bg-muted group-data-[state=selected]/row:bg-muted',
+                      header.column.columnDef.meta?.className,
+                      header.column.columnDef.meta?.thClassName
+                    )}
+                  >
+                    {!header.isPlaceholder &&
+                      flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
                       )}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  )
-                })}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
+
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
+                  className='group/row'
                   data-state={row.getIsSelected() && 'selected'}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
                       className={cn(
+                        'bg-background transition-colors group-hover/row:bg-muted group-data-[state=selected]/row:bg-muted',
                         cell.column.columnDef.meta?.className,
                         cell.column.columnDef.meta?.tdClassName
                       )}
@@ -180,8 +174,8 @@ export function TasksTable({ data }: DataTableProps) {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
                   className='h-24 text-center'
+                  colSpan={columns.length}
                 >
                   No results.
                 </TableCell>
@@ -190,8 +184,9 @@ export function TasksTable({ data }: DataTableProps) {
           </TableBody>
         </Table>
       </div>
+
       <DataTablePagination table={table} className='mt-auto' />
-      <DataTableBulkActions table={table} />
+      <TasksTableBulkActions table={table} />
     </div>
   )
 }

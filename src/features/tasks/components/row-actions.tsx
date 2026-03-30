@@ -15,33 +15,30 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { labels } from '../data/data'
-import { taskSchema } from '../data/schema'
-import { useTasks } from './tasks-provider'
+import { labels } from '../data/items'
+import { Task } from '../data/schema'
+import { useTasks } from './provider'
 
-type DataTableRowActionsProps<TData> = {
+type TasksTableRowActionsProps<TData> = {
   row: Row<TData>
 }
 
-export function DataTableRowActions<TData>({
+export function TasksTableRowActions<TData>({
   row,
-}: DataTableRowActionsProps<TData>) {
-  const task = taskSchema.parse(row.original)
-
+}: TasksTableRowActionsProps<TData>) {
+  const task = Task.parse(row.original)
   const { setOpen, setCurrentRow } = useTasks()
 
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant='ghost'
-          className='flex h-8 w-8 p-0 data-[state=open]:bg-muted'
-        >
-          <DotsHorizontalIcon className='h-4 w-4' />
+        <Button size='icon' variant='ghost'>
+          <DotsHorizontalIcon />
           <span className='sr-only'>Open menu</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align='end' className='w-[160px]'>
+
+      <DropdownMenuContent className='w-40' align='end'>
         <DropdownMenuItem
           onClick={() => {
             setCurrentRow(task)
@@ -50,22 +47,29 @@ export function DataTableRowActions<TData>({
         >
           Edit
         </DropdownMenuItem>
+
         <DropdownMenuItem disabled>Make a copy</DropdownMenuItem>
         <DropdownMenuItem disabled>Favorite</DropdownMenuItem>
+
         <DropdownMenuSeparator />
+
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>Labels</DropdownMenuSubTrigger>
+
           <DropdownMenuSubContent>
             <DropdownMenuRadioGroup value={task.label}>
-              {labels.map((label) => (
-                <DropdownMenuRadioItem key={label.value} value={label.value}>
-                  {label.label}
+              {labels.map(({ label, value, icon: Icon }) => (
+                <DropdownMenuRadioItem key={value} value={value}>
+                  {Icon && <Icon className='text-muted-foreground' />}
+                  {label}
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
           </DropdownMenuSubContent>
         </DropdownMenuSub>
+
         <DropdownMenuSeparator />
+
         <DropdownMenuItem
           onClick={() => {
             setCurrentRow(task)
