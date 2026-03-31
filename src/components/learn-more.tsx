@@ -32,8 +32,8 @@ export function LearnMore({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        side='top'
         align='start'
+        side='top'
         {...contentProps}
         className={cn('text-sm text-muted-foreground', contentProps?.className)}
       >

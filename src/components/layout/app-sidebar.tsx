@@ -1,3 +1,4 @@
+import { useDirection } from '@/context/direction-provider'
 import { useLayout } from '@/context/layout-provider'
 import {
   Sidebar,
@@ -13,9 +14,14 @@ import { NavUser } from './nav-user'
 import { TeamSwitcher } from './team-switcher'
 
 export function AppSidebar() {
-  const { collapsible, variant } = useLayout()
+  const { dir } = useDirection()
+  const { variant, collapsible } = useLayout()
+
   return (
-    <Sidebar collapsible={collapsible} variant={variant}>
+    <Sidebar
+      {...{ variant, collapsible }}
+      {...(dir === 'rtl' && { side: 'right' })}
+    >
       <SidebarHeader>
         <TeamSwitcher teams={sidebarData.teams} />
 
@@ -23,14 +29,17 @@ export function AppSidebar() {
          /* if you want to use the normal app title instead of TeamSwitch dropdown */}
         {/* <AppTitle /> */}
       </SidebarHeader>
+
       <SidebarContent>
         {sidebarData.navGroups.map((props) => (
           <NavGroup key={props.title} {...props} />
         ))}
       </SidebarContent>
+
       <SidebarFooter>
         <NavUser user={sidebarData.user} />
       </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   )

@@ -12,13 +12,13 @@ type AuthenticatedLayoutProps = {
 }
 
 export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
-  const defaultOpen = getCookie('sidebar_state') !== 'false'
   return (
     <SearchProvider>
       <LayoutProvider>
-        <SidebarProvider defaultOpen={defaultOpen}>
+        <SidebarProvider defaultOpen={getCookie('sidebar_state') !== 'false'}>
           <SkipToMain />
           <AppSidebar />
+
           <SidebarInset
             className={cn(
               // Set content container, so we can use container queries

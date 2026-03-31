@@ -61,9 +61,8 @@ export function NavUser({ user }: NavUserProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               className='w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg'
-              side={isMobile ? 'bottom' : 'right'}
               align='end'
-              sideOffset={4}
+              side={isMobile ? 'bottom' : 'right'}
             >
               <DropdownMenuLabel className='p-0 font-normal'>
                 <div className='flex items-center gap-2 px-1 py-1.5 text-start text-sm'>

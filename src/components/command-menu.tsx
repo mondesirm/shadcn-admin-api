@@ -1,6 +1,7 @@
-import React from 'react'
+import { useCallback } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { ArrowRight, ChevronRight, Laptop, Moon, Sun } from 'lucide-react'
+import { modes, themes } from '@/config/themes'
+import { ArrowRight, ChevronRight } from 'lucide-react'
 import { useSearch } from '@/context/search-provider'
 import { useTheme } from '@/context/theme-provider'
 import {
@@ -17,11 +18,11 @@ import { ScrollArea } from './ui/scroll-area'
 
 export function CommandMenu() {
   const navigate = useNavigate()
-  const { setTheme } = useTheme()
   const { open, setOpen } = useSearch()
+  const { setMode, setTheme } = useTheme()
 
-  const runCommand = React.useCallback(
-    (command: () => unknown) => {
+  const runCommand = useCallback(
+    (command: () => void) => {
       setOpen(false)
       command()
     },
@@ -29,11 +30,13 @@ export function CommandMenu() {
   )
 
   return (
-    <CommandDialog modal open={open} onOpenChange={setOpen}>
+    <CommandDialog open={open} onOpenChange={setOpen} modal>
       <CommandInput placeholder='Type a command or search...' />
+
       <CommandList>
-        <ScrollArea type='hover' className='h-72 pe-1'>
+        <ScrollArea className='h-72 pe-1'>
           <CommandEmpty>No results found.</CommandEmpty>
+
           {sidebarData.navGroups.map((group) => (
             <CommandGroup key={group.title} heading={group.title}>
               {group.items.map((navItem, i) => {
@@ -49,6 +52,7 @@ export function CommandMenu() {
                       <div className='flex size-4 items-center justify-center'>
                         <ArrowRight className='size-2 text-muted-foreground/80' />
                       </div>
+
                       {navItem.title}
                     </CommandItem>
                   )
@@ -64,25 +68,40 @@ export function CommandMenu() {
                     <div className='flex size-4 items-center justify-center'>
                       <ArrowRight className='size-2 text-muted-foreground/80' />
                     </div>
+
                     {navItem.title} <ChevronRight /> {subItem.title}
                   </CommandItem>
                 ))
               })}
             </CommandGroup>
           ))}
+
           <CommandSeparator />
+
+          <CommandGroup heading='Mode'>
+            {modes.map(({ label, value, icon: Icon }) => (
+              <CommandItem
+                key={value}
+                onSelect={() => runCommand(() => setMode(value))}
+              >
+                {Icon && <Icon />}
+                {label}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+
+          <CommandSeparator />
+
           <CommandGroup heading='Theme'>
-            <CommandItem onSelect={() => runCommand(() => setTheme('light'))}>
-              <Sun /> <span>Light</span>
-            </CommandItem>
-            <CommandItem onSelect={() => runCommand(() => setTheme('dark'))}>
-              <Moon className='scale-90' />
-              <span>Dark</span>
-            </CommandItem>
-            <CommandItem onSelect={() => runCommand(() => setTheme('system'))}>
-              <Laptop />
-              <span>System</span>
-            </CommandItem>
+            {themes.map(({ label, value, icon: Icon }) => (
+              <CommandItem
+                key={value}
+                onSelect={() => runCommand(() => setTheme(value))}
+              >
+                {Icon && <Icon />}
+                {label}
+              </CommandItem>
+            ))}
           </CommandGroup>
         </ScrollArea>
       </CommandList>

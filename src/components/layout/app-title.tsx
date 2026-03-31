@@ -15,19 +15,20 @@ export function AppTitle() {
     <SidebarMenu>
       <SidebarMenuItem>
         <SidebarMenuButton
-          size='lg'
           className='gap-0 py-0 hover:bg-transparent active:bg-transparent'
+          size='lg'
           asChild
         >
           <div>
             <Link
+              className='grid flex-1 text-start text-sm leading-tight'
               to='/'
               onClick={() => setOpenMobile(false)}
-              className='grid flex-1 text-start text-sm leading-tight'
             >
               <span className='truncate font-bold'>Shadcn-Admin</span>
               <span className='truncate text-xs'>Vite + ShadcnUI</span>
             </Link>
+
             <ToggleSidebar />
           </div>
         </SidebarMenuButton>
@@ -47,11 +48,11 @@ function ToggleSidebar({
     <Button
       data-sidebar='trigger'
       data-slot='sidebar-trigger'
-      variant='ghost'
-      size='icon'
       className={cn('aspect-square size-8 max-md:scale-125', className)}
-      onClick={(event) => {
-        onClick?.(event)
+      size='icon'
+      variant='ghost'
+      onClick={(e) => {
+        onClick?.(e)
         toggleSidebar()
       }}
       {...props}

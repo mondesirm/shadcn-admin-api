@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import ReactDOM from 'react-dom/client'
+import { createRoot } from 'react-dom/client'
 import { AxiosError } from 'axios'
 import {
   QueryCache,
@@ -7,17 +7,16 @@ import {
   QueryClientProvider,
 } from '@tanstack/react-query'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
+import { routeTree } from '@/routeTree.gen'
+import '@/styles/index.css'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 import { handleServerError } from '@/lib/handle-server-error'
 import * as z from '@/lib/zod'
-import { DirectionProvider } from './context/direction-provider'
-import { FontProvider } from './context/font-provider'
-import { ThemeProvider } from './context/theme-provider'
-// Generated Routes
-import { routeTree } from './routeTree.gen'
-// Styles
-import './styles/index.css'
+import { DirectionProvider } from '@/context/direction-provider'
+import { FontProvider } from '@/context/font-provider'
+import { ThemeProvider } from '@/context/theme-provider'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 z.init()
 
@@ -81,6 +80,8 @@ const router = createRouter({
   context: { queryClient },
   defaultPreload: 'intent',
   defaultPreloadStaleTime: 0,
+  defaultViewTransition: true,
+  scrollRestoration: true,
 })
 
 // Register the router instance for type safety
@@ -91,20 +92,18 @@ declare module '@tanstack/react-router' {
 }
 
 // Render the app
-const rootElement = document.getElementById('root')!
-if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement)
-  root.render(
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <FontProvider>
-            <DirectionProvider>
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <FontProvider>
+          <DirectionProvider>
+            <TooltipProvider>
               <RouterProvider router={router} />
-            </DirectionProvider>
-          </FontProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </StrictMode>
-  )
-}
+            </TooltipProvider>
+          </DirectionProvider>
+        </FontProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  </StrictMode>
+)

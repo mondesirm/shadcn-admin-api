@@ -1,3 +1,4 @@
+import { AlertTriangle, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   AlertDialog,
@@ -10,55 +11,59 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 
-type ConfirmDialogProps = {
+type ConfirmDialogProps = React.ComponentProps<typeof AlertDialogContent> & {
   open: boolean
   onOpenChange: (open: boolean) => void
-  title: React.ReactNode
-  disabled?: boolean
-  desc: React.JSX.Element | string
-  cancelBtnText?: string
+  desc: React.ReactNode
+  cancelText?: React.ReactNode
   confirmText?: React.ReactNode
-  destructive?: boolean
-  handleConfirm: () => void
+  disabled?: boolean
   isLoading?: boolean
-  className?: string
-  children?: React.ReactNode
+  destructive?: boolean
+  onSubmit: () => void
 }
 
-export function ConfirmDialog(props: ConfirmDialogProps) {
-  const {
-    title,
-    desc,
-    children,
-    className,
-    confirmText,
-    cancelBtnText,
-    destructive,
-    isLoading,
-    disabled = false,
-    handleConfirm,
-    ...actions
-  } = props
+export function ConfirmDialog({
+  className,
+  open,
+  onOpenChange,
+  title,
+  desc,
+  cancelText = 'Cancel',
+  confirmText = 'Confirm',
+  children,
+  destructive,
+  isLoading,
+  disabled = false,
+  onSubmit,
+  ...props
+}: ConfirmDialogProps) {
   return (
-    <AlertDialog {...actions}>
-      <AlertDialogContent className={cn(className && className)}>
+    <AlertDialog {...{ open, onOpenChange }}>
+      <AlertDialogContent className={cn('@container', className)} {...props}>
         <AlertDialogHeader className='text-start'>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription asChild>
-            <div>{desc}</div>
-          </AlertDialogDescription>
+          <AlertDialogTitle className={destructive ? 'text-destructive' : ''}>
+            {destructive && <AlertTriangle className='me-2 inline size-4' />}
+            {title}
+          </AlertDialogTitle>
+
+          <AlertDialogDescription>{desc}</AlertDialogDescription>
         </AlertDialogHeader>
+
         {children}
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>
-            {cancelBtnText ?? 'Cancel'}
+
+        <AlertDialogFooter className='grid gap-4 @2xs:grid-cols-2'>
+          <AlertDialogCancel asChild>
+            <Button variant='outline'>{cancelText}</Button>
           </AlertDialogCancel>
+
           <Button
-            variant={destructive ? 'destructive' : 'default'}
-            onClick={handleConfirm}
+            {...(destructive && { variant: 'destructive' })}
             disabled={disabled || isLoading}
+            onClick={onSubmit}
           >
-            {confirmText ?? 'Continue'}
+            {confirmText}
+            {isLoading && <Loader2 className='animate-spin' />}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

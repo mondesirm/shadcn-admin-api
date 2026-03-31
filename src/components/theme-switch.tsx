@@ -1,57 +1,77 @@
-import { useEffect } from 'react'
-import { Check, Moon, Sun } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { useTheme } from '@/context/theme-provider'
+import { modes, themes } from '@/config/themes'
+import { SunMoon } from 'lucide-react'
+import { SHORTCUT, useTheme } from '@/context/theme-provider'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Kbd } from '@/components/ui/kbd'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 export function ThemeSwitch() {
-  const { theme, setTheme } = useTheme()
-
-  /* Update theme-color meta tag
-   * when theme is updated */
-  useEffect(() => {
-    const themeColor = theme === 'dark' ? '#020817' : '#fff'
-    const metaThemeColor = document.querySelector("meta[name='theme-color']")
-    if (metaThemeColor) metaThemeColor.setAttribute('content', themeColor)
-  }, [theme])
+  const { ref, mode, theme, setMode, setTheme } = useTheme()
+  const [Light, Dark] = modes.map((m) => (mode === 'system' ? SunMoon : m.icon))
 
   return (
     <DropdownMenu modal={false}>
-      <DropdownMenuTrigger asChild>
-        <Button variant='ghost' size='icon' className='scale-95 rounded-full'>
-          <Sun className='size-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90' />
-          <Moon className='absolute size-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0' />
-          <span className='sr-only'>Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align='end'>
-        <DropdownMenuItem onClick={() => setTheme('light')}>
-          Light{' '}
-          <Check
-            size={14}
-            className={cn('ms-auto', theme !== 'light' && 'hidden')}
-          />
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('dark')}>
-          Dark
-          <Check
-            size={14}
-            className={cn('ms-auto', theme !== 'dark' && 'hidden')}
-          />
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('system')}>
-          System
-          <Check
-            size={14}
-            className={cn('ms-auto', theme !== 'system' && 'hidden')}
-          />
-        </DropdownMenuItem>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button ref={ref} size='icon' variant='ghost'>
+              <Light className='transition-all duration-500 dark:scale-0 dark:-rotate-180' />
+              <Dark className='absolute transition-all duration-500 not-dark:scale-0 not-dark:rotate-180' />
+              <span className='sr-only'>Toggle theme</span>
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+
+        <TooltipContent>
+          Toggle theme
+          <Kbd className='uppercase'>⌘ {SHORTCUT}</Kbd>
+        </TooltipContent>
+      </Tooltip>
+
+      <DropdownMenuContent className='w-fit' align='end'>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Modes</DropdownMenuLabel>
+
+          {/* @ts-expect-error Non-generic type */}
+          <DropdownMenuRadioGroup value={mode} onValueChange={setMode}>
+            {modes.map(({ label, value, icon: Icon }) => (
+              <DropdownMenuRadioItem key={value} value={value}>
+                {Icon && <Icon />}
+                {label}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuGroup>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Themes</DropdownMenuLabel>
+
+          {/* @ts-expect-error Non-generic type */}
+          <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
+            {themes.map(({ label, value, icon: Icon }) => (
+              <DropdownMenuRadioItem key={value} value={value}>
+                {Icon && <Icon />}
+                {label}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   )
