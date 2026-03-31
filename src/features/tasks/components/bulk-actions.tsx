@@ -10,7 +10,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { sleep } from '@/lib/utils'
+import { api } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -38,19 +38,21 @@ export function TasksTableBulkActions<TData>({
 }: TasksTableBulkActionsProps<TData>) {
   const queryClient = useQueryClient()
   const [isLoading, setIsLoading] = useState(false)
-  const { length } = table.getFilteredSelectedRowModel().rows
+  const selectedRows = table.getFilteredSelectedRowModel().rows
   const [openDeleteDialog, onOpenDeleteDialog] = useState(false)
+  const selectedTasks = selectedRows.map((row) => row.original as Task)
+  const ids = selectedTasks.map((task) => task.id)
 
   const onUpdate = <T extends keyof Task>(k: T, v: Task[T]) => {
     if (isLoading) return
     setIsLoading(true)
 
-    toast.promise(sleep(2000), {
+    toast.promise(api.put<Task.Bulk['update']>('tasks', { [k]: v, ids }), {
       loading: `Updating ${k}...`,
-      success: () => {
+      success: ({ count }) => {
         table.resetRowSelection()
         queryClient.invalidateQueries({ queryKey: ['tasks'] })
-        return `Updated ${k} to ${v} for ${length} task${length > 1 ? 's' : ''}.`
+        return `Updated ${k} to ${v} for ${count} task${count > 1 ? 's' : ''}.`
       },
       error: 'Bulk task update failed. Please try again.',
       finally: () => setIsLoading(false),
@@ -61,11 +63,11 @@ export function TasksTableBulkActions<TData>({
     if (isLoading) return
     setIsLoading(true)
 
-    toast.promise(sleep(2000), {
-      loading: 'Duplicating tasks...',
-      success: () => {
+    toast.promise(api.post<Task.Bulk['create']>('tasks', selectedTasks), {
+      loading: `Duplicating tasks...`,
+      success: ({ count }) => {
         table.resetRowSelection()
-        return `Duplicated ${length} task${length > 1 ? 's' : ''}.`
+        return `Duplicated ${count} task${count > 1 ? 's' : ''}.`
       },
       error: 'Bulk task duplication failed. Please try again.',
       finally: () => setIsLoading(false),
@@ -76,11 +78,11 @@ export function TasksTableBulkActions<TData>({
     if (isLoading) return
     setIsLoading(true)
 
-    toast.promise(sleep(2000), {
-      loading: 'Exporting tasks...',
-      success: () => {
+    toast.promise(api.export('tasks', selectedTasks), {
+      loading: `Exporting tasks to CSV...`,
+      success: ({ count }) => {
         table.resetRowSelection()
-        return `Exported ${length} task${length > 1 ? 's' : ''} to CSV.`
+        return `Exported ${count} task${count > 1 ? 's' : ''} to CSV.`
       },
       error: 'Bulk task export failed. Please try again.',
       finally: () => setIsLoading(false),

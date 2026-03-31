@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { cn } from '@/lib/utils'
+import { api, cn } from '@/lib/utils'
 import { useTableUrlState } from '@/hooks/use-table-url-state'
 import {
   Table,
@@ -25,7 +25,6 @@ import {
 } from '@/components/ui/table'
 import { DataTablePagination, DataTableToolbar } from '@/components/data-table'
 import { priorities, statuses } from '../data/items'
-import { tasks } from '../data/mock'
 import { type Task } from '../data/schema'
 import { TasksTableBulkActions } from './bulk-actions'
 import { columns } from './columns'
@@ -66,7 +65,7 @@ export function TasksTable() {
 
   const { data } = useSuspenseQuery<Task[]>({
     queryKey: ['tasks'],
-    queryFn: () => tasks,
+    queryFn: () => api.get('tasks'),
   })
 
   // eslint-disable-next-line react-hooks/incompatible-library

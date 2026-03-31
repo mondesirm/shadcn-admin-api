@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { AtSign, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { sleep } from '@/lib/utils'
+import { api } from '@/lib/utils'
 import { useDirection } from '@/context/direction-provider'
 import { Button } from '@/components/ui/button'
 import {
@@ -55,20 +55,23 @@ export function TasksMutateDrawer({
     form.reset()
   }
 
-  const onSubmit = () => {
+  const onSubmit = (task: Task.Form) => {
     if (isLoading) return
     setIsLoading(true)
 
-    toast.promise(sleep(2000), {
-      loading: (isUpdate ? 'Updating' : 'Creating') + ' task...',
-      success: () => {
-        onOpenChange(false)
-        queryClient.invalidateQueries({ queryKey: ['tasks'] })
-        return `Task ${isUpdate ? 'updated' : 'created'} successfully!`
-      },
-      error: `Task ${isUpdate ? 'update' : 'creation'} failed. Please try again.`,
-      finally: () => setIsLoading(false),
-    })
+    toast.promise(
+      api[isUpdate ? 'put' : 'post'](`tasks/${currentRow?.id || ''}`, task),
+      {
+        loading: (isUpdate ? 'Updating' : 'Creating') + ' task...',
+        success: () => {
+          onOpenChange(false)
+          queryClient.invalidateQueries({ queryKey: ['tasks'] })
+          return `Task ${isUpdate ? 'updated' : 'created'} successfully!`
+        },
+        error: `Task ${isUpdate ? 'update' : 'creation'} failed. Please try again.`,
+        finally: () => setIsLoading(false),
+      }
+    )
   }
 
   return (

@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { sleep } from '@/lib/utils'
+import { api } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -53,12 +53,12 @@ export function TasksImportDialog({
     if (isLoading) return
     setIsLoading(true)
 
-    toast.promise(sleep(2000), {
+    toast.promise(api.import('tasks', file[0]), {
       loading: `Importing tasks from ${file[0].name}...`,
-      success: () => {
+      success: ({ count }) => {
         onOpenChange(false)
         queryClient.invalidateQueries({ queryKey: ['tasks'] })
-        return `Imported tasks.`
+        return `Imported ${count} task${count === 1 ? '' : 's'}.`
       },
       error: 'Task import failed. Please try again.',
       finally: () => setIsLoading(false),

@@ -1,11 +1,33 @@
-import { showSubmittedData } from '@/lib/show-submitted-data'
+import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { api } from '@/lib/utils'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { TasksImportDialog } from './import-dialog'
 import { TasksMutateDrawer } from './mutate-drawer'
 import { useTasks } from './provider'
 
 export function TasksDialogs() {
+  const queryClient = useQueryClient()
+  const [isLoading, setIsLoading] = useState(false)
   const { open, setOpen, currentRow, setCurrentRow } = useTasks()
+
+  const onSubmit = () => {
+    if (isLoading) return
+    setIsLoading(true)
+
+    toast.promise(api.delete(`tasks/${currentRow?.id || ''}`), {
+      loading: 'Deleting task...',
+      success: () => {
+        setOpen(null)
+        setTimeout(() => setCurrentRow(null), 500)
+        queryClient.invalidateQueries({ queryKey: ['tasks'] })
+        return 'Deleted task.'
+      },
+      error: 'Task deletion failed. Please try again.',
+      finally: () => setIsLoading(false),
+    })
+  }
 
   return (
     <>
@@ -50,15 +72,10 @@ export function TasksDialogs() {
               </>
             }
             confirmText='Delete'
+            disabled={!open}
+            isLoading={isLoading}
             destructive
-            onSubmit={() => {
-              setOpen(null)
-              setTimeout(() => setCurrentRow(null), 500)
-              showSubmittedData(
-                currentRow,
-                'The following task has been deleted:'
-              )
-            }}
+            onSubmit={onSubmit}
           />
         </>
       )}

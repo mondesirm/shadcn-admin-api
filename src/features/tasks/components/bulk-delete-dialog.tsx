@@ -1,12 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { type Table } from '@tanstack/react-table'
 import { toast } from 'sonner'
-import { sleep } from '@/lib/utils'
+import { api } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ConfirmDialog } from '@/components/confirm-dialog'
+import { type Task } from '../data/schema'
 
 type TasksBulkDeleteDialogProps<TData> = {
   table: Table<TData>
@@ -19,14 +21,15 @@ const CONFIRM_WORD = 'DELETE'
 export function TasksBulkDeleteDialog<TData>({
   table,
   open,
-  onOpenChange,
+  onOpenChange: setOpen,
 }: TasksBulkDeleteDialogProps<TData>) {
+  const queryClient = useQueryClient()
   const [value, onChange] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const { length } = table.getFilteredSelectedRowModel().rows
+  const { length, ...selectedRows } = table.getFilteredSelectedRowModel().rows
 
-  onOpenChange = (v) => {
-    onOpenChange(v)
+  const onOpenChange = (v: boolean) => {
+    setOpen(v)
     onChange('')
   }
 
@@ -37,16 +40,23 @@ export function TasksBulkDeleteDialog<TData>({
     if (value.trim() !== CONFIRM_WORD)
       return toast.error(`Please type "${CONFIRM_WORD}" to confirm.`)
 
-    toast.promise(sleep(2000), {
-      loading: 'Deleting tasks...',
-      success: () => {
-        onOpenChange(false)
-        table.resetRowSelection()
-        return `Deleted ${length} task${length > 1 ? 's' : ''}`
-      },
-      error: 'Bulk task deletion failed. Please try again.',
-      finally: () => setIsLoading(false),
-    })
+    toast.promise(
+      api.delete<Task.Bulk['delete']>(
+        'tasks',
+        selectedRows.map((row) => (row.original as Task).id)
+      ),
+      {
+        loading: 'Deleting tasks...',
+        success: ({ count }) => {
+          onOpenChange(false)
+          table.resetRowSelection()
+          queryClient.invalidateQueries({ queryKey: ['tasks'] })
+          return `Deleted ${count} task${count > 1 ? 's' : ''}.`
+        },
+        error: 'Bulk task deletion failed. Please try again.',
+        finally: () => setIsLoading(false),
+      }
+    )
   }
 
   return (
