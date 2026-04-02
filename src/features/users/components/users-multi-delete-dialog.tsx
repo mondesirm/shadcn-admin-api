@@ -10,28 +10,25 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 
-type UserMultiDeleteDialogProps<TData> = {
+type UserBulkDeleteDialogProps<TData> = {
+  table: Table<TData>
   open: boolean
   onOpenChange: (open: boolean) => void
-  table: Table<TData>
 }
 
 const CONFIRM_WORD = 'DELETE'
 
-export function UsersMultiDeleteDialog<TData>({
+export function UsersBulkDeleteDialog<TData>({
+  table,
   open,
   onOpenChange,
-  table,
-}: UserMultiDeleteDialogProps<TData>) {
+}: UserBulkDeleteDialogProps<TData>) {
   const [value, setValue] = useState('')
-
   const selectedRows = table.getFilteredSelectedRowModel().rows
 
   const handleDelete = () => {
-    if (value.trim() !== CONFIRM_WORD) {
-      toast.error(`Please type "${CONFIRM_WORD}" to confirm.`)
-      return
-    }
+    if (value.trim() !== CONFIRM_WORD)
+      return toast.error(`Please type "${CONFIRM_WORD}" to confirm.`)
 
     onOpenChange(false)
 
@@ -40,11 +37,9 @@ export function UsersMultiDeleteDialog<TData>({
       success: () => {
         setValue('')
         table.resetRowSelection()
-        return `Deleted ${selectedRows.length} ${
-          selectedRows.length > 1 ? 'users' : 'user'
-        }`
+        return `Deleted ${selectedRows.length} user${selectedRows.length ? 's' : ''}`
       },
-      error: 'Error',
+      error: 'Bulk user deletion failed. Please try again.',
     })
   }
 
@@ -82,6 +77,7 @@ export function UsersMultiDeleteDialog<TData>({
 
           <Alert variant='destructive'>
             <AlertTitle>Warning!</AlertTitle>
+
             <AlertDescription>
               Please be careful, this operation can not be rolled back.
             </AlertDescription>

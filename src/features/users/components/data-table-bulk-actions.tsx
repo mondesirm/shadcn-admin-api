@@ -1,17 +1,25 @@
 import { useState } from 'react'
 import { type Table } from '@tanstack/react-table'
-import { Trash2, UserX, UserCheck, Mail } from 'lucide-react'
+import { CircleArrowUp, Download, Trash2, UserCog } from 'lucide-react'
 import { toast } from 'sonner'
 import { sleep } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Separator } from '@/components/ui/separator'
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { DataTableBulkActions as BulkActionsToolbar } from '@/components/data-table'
+import { roles, statuses } from '../data/enums'
 import { type User } from '../data/schema'
-import { UsersMultiDeleteDialog } from './users-multi-delete-dialog'
+import { UsersBulkDeleteDialog } from './users-multi-delete-dialog'
 
 type DataTableBulkActionsProps<TData> = {
   table: Table<TData>
@@ -23,113 +31,151 @@ export function DataTableBulkActions<TData>({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const selectedRows = table.getFilteredSelectedRowModel().rows
 
-  const handleBulkStatusChange = (status: 'active' | 'inactive') => {
+  const handleBulkMutate = <T extends keyof User>(k: T, v: User[T]) => {
     const selectedUsers = selectedRows.map((row) => row.original as User)
+
     toast.promise(sleep(2000), {
-      loading: `${status === 'active' ? 'Activating' : 'Deactivating'} users...`,
+      loading: `Updating ${k}...`,
       success: () => {
         table.resetRowSelection()
-        return `${status === 'active' ? 'Activated' : 'Deactivated'} ${selectedUsers.length} user${selectedUsers.length > 1 ? 's' : ''}`
+        return `Updated ${k} to ${v} for ${selectedUsers.length} user${selectedUsers.length > 1 ? 's' : ''}.`
       },
-      error: `Error ${status === 'active' ? 'activating' : 'deactivating'} users`,
+      error: 'Bulk user update failed. Please try again.',
     })
-    table.resetRowSelection()
   }
 
-  const handleBulkInvite = () => {
+  const handleBulkExport = () => {
     const selectedUsers = selectedRows.map((row) => row.original as User)
+
     toast.promise(sleep(2000), {
-      loading: 'Inviting users...',
+      loading: 'Exporting users...',
       success: () => {
         table.resetRowSelection()
-        return `Invited ${selectedUsers.length} user${selectedUsers.length > 1 ? 's' : ''}`
+        return `Exported ${selectedUsers.length} user${selectedUsers.length > 1 ? 's' : ''} to CSV.`
       },
-      error: 'Error inviting users',
+      error: 'User export failed. Please try again.',
     })
-    table.resetRowSelection()
   }
 
   return (
     <>
       <BulkActionsToolbar table={table} entityName='user'>
+        <DropdownMenu>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  aria-label='Update role'
+                  className='size-8'
+                  title='Update role'
+                  size='icon'
+                  variant='outline'
+                >
+                  <UserCog />
+                  <span className='sr-only'>Update role</span>
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+
+            <TooltipContent>
+              <p>Update role</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <DropdownMenuContent sideOffset={14}>
+            {roles.map(({ label, value, icon: Icon }) => (
+              <DropdownMenuItem
+                key={value}
+                defaultValue={value}
+                onClick={() => handleBulkMutate('role', value)}
+              >
+                {Icon && <Icon />}
+                {label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  aria-label='Update status'
+                  className='size-8'
+                  title='Update status'
+                  size='icon'
+                  variant='outline'
+                >
+                  <CircleArrowUp />
+                  <span className='sr-only'>Update status</span>
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+
+            <TooltipContent>
+              <p>Update status</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <DropdownMenuContent sideOffset={14}>
+            {statuses.map(({ label, value, icon: Icon }) => (
+              <DropdownMenuItem
+                key={value}
+                defaultValue={value}
+                onClick={() => handleBulkMutate('status', value)}
+              >
+                {Icon && <Icon />}
+                {label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Separator className='h-5' orientation='vertical' aria-hidden='true' />
+
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant='outline'
-              size='icon'
-              onClick={handleBulkInvite}
+              aria-label='Export selected users'
               className='size-8'
-              aria-label='Invite selected users'
-              title='Invite selected users'
+              title='Export selected users'
+              size='icon'
+              variant='outline'
+              onClick={handleBulkExport}
             >
-              <Mail />
-              <span className='sr-only'>Invite selected users</span>
+              <Download />
+              <span className='sr-only'>Export selected users</span>
             </Button>
           </TooltipTrigger>
+
           <TooltipContent>
-            <p>Invite selected users</p>
+            <p>Export selected users</p>
           </TooltipContent>
         </Tooltip>
 
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant='outline'
-              size='icon'
-              onClick={() => handleBulkStatusChange('active')}
-              className='size-8'
-              aria-label='Activate selected users'
-              title='Activate selected users'
-            >
-              <UserCheck />
-              <span className='sr-only'>Activate selected users</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Activate selected users</p>
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant='outline'
-              size='icon'
-              onClick={() => handleBulkStatusChange('inactive')}
-              className='size-8'
-              aria-label='Deactivate selected users'
-              title='Deactivate selected users'
-            >
-              <UserX />
-              <span className='sr-only'>Deactivate selected users</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Deactivate selected users</p>
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant='destructive'
-              size='icon'
-              onClick={() => setShowDeleteConfirm(true)}
-              className='size-8'
               aria-label='Delete selected users'
+              className='size-8'
               title='Delete selected users'
+              size='icon'
+              variant='destructive'
+              onClick={() => setShowDeleteConfirm(true)}
             >
               <Trash2 />
               <span className='sr-only'>Delete selected users</span>
             </Button>
           </TooltipTrigger>
+
           <TooltipContent>
             <p>Delete selected users</p>
           </TooltipContent>
         </Tooltip>
       </BulkActionsToolbar>
 
-      <UsersMultiDeleteDialog
+      <UsersBulkDeleteDialog
         table={table}
         open={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}

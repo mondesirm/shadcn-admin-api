@@ -24,7 +24,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { SelectInput } from '@/components/form/select'
-import { roles } from '../data/data'
+import { roles } from '../data/enums'
 
 const formSchema = z.object({
   email: z.email({
@@ -70,20 +70,22 @@ export function UsersInviteDialog({
           <DialogTitle className='flex items-center gap-2'>
             <MailPlus /> Invite User
           </DialogTitle>
+
           <DialogDescription>
             Invite new user to join your team by sending them an email
             invitation. Assign a role to define their access level.
           </DialogDescription>
         </DialogHeader>
+
         <Form {...form}>
           <form
             id='user-invite-form'
-            onSubmit={form.handleSubmit(onSubmit)}
             className='space-y-4'
+            onSubmit={form.handleSubmit(onSubmit)}
           >
             <FormField
-              control={form.control}
               name='email'
+              control={form.control}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Email</FormLabel>

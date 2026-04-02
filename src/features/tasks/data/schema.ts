@@ -1,3 +1,4 @@
+import { userSchema } from '@/features/users/data/schema.js'
 import * as z from '../../../lib/zod.js'
 import { labels, priorities, statuses } from './items.js'
 
@@ -7,7 +8,8 @@ export const Model = z.db.table({
   status: z.db.enum(statuses),
   priority: z.db.enum(priorities),
   dueDate: z.db.date.future(),
-  assignee: z.db.text().optional(),
+  assignee: z.lazy(() => userSchema).optional(),
+  assigneeId: z.lazy(() => userSchema.shape.id).optional(),
   description: z.db.text().max(300).optional(),
 })
 

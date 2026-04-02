@@ -24,7 +24,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/form/password'
 import { SelectInput } from '@/components/form/select'
-import { roles } from '../data/data'
+import { roles } from '../data/enums'
 import { type User } from '../data/schema'
 
 const formSchema = z

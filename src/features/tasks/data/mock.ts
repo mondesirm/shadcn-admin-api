@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker'
+import { users } from '@/features/users/data/users'
 import { labels, statuses, priorities } from './items'
 import { type Task } from './schema'
 
@@ -12,7 +13,7 @@ export const tasks = faker.helpers.multiple<Task>(
     status: faker.helpers.arrayElement(statuses.map((_) => _.value)),
     priority: faker.helpers.arrayElement(priorities.map((_) => _.value)),
     dueDate: faker.date.future(),
-    assignee: faker.person.fullName(),
+    assigneeId: faker.helpers.arrayElement(users).id,
     description: faker.lorem.paragraph(),
     createdAt: faker.date.past(),
     updatedAt: faker.date.recent(),

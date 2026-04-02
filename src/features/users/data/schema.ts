@@ -1,32 +1,29 @@
-import { z } from 'zod'
+import { taskSchema } from '@/features/tasks/data/schema.js'
+import * as z from '../../../lib/zod.js'
+import { roles, statuses } from './enums.js'
 
-const userStatusSchema = z.union([
-  z.literal('active'),
-  z.literal('inactive'),
-  z.literal('invited'),
-  z.literal('suspended'),
-])
-export type UserStatus = z.infer<typeof userStatusSchema>
+export const userSchema = z.db.table(
+  {
+    firstName: z.db.text().max(100),
+    lastName: z.db.text().max(100),
+    username: z.db.text().max(100),
+    email: z.email(),
+    phoneNumber: z.e164().optional(),
+    role: z.db.enum(roles).default('cashier'),
+    status: z.db.enum(statuses).default('inactive'),
+    get tasks() {
+      return z.lazy(() => taskSchema.array()).optional()
+    },
+  },
+  { primaryKey: 'uuid', softDelete: true }
+)
 
-const userRoleSchema = z.union([
-  z.literal('superadmin'),
-  z.literal('admin'),
-  z.literal('cashier'),
-  z.literal('manager'),
-])
+export const userFormSchema = z.form(userSchema)
+export const userBulkSchema = z.bulk(userSchema)
 
-const userSchema = z.object({
-  id: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  username: z.string(),
-  email: z.string(),
-  phoneNumber: z.string(),
-  status: userStatusSchema,
-  role: userRoleSchema,
-  createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date(),
-})
 export type User = z.infer<typeof userSchema>
+export type UserForm = z.infer<typeof userFormSchema>
 
-export const userListSchema = z.array(userSchema)
+export type UserBulk = {
+  [K in keyof typeof userBulkSchema]: z.infer<(typeof userBulkSchema)[K]>
+}
