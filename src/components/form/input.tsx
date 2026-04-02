@@ -29,6 +29,7 @@ export function Input({
   value,
   icon: Icon = FormInput,
   placeholder = 'Enter a value',
+  maxLength = 255,
   disabled,
   isLoading,
   ...props
@@ -61,7 +62,7 @@ export function Input({
           {props.type === 'textarea' && value && (
             <InputGroupText className='text-xs'>
               {value?.toString().length || ''}
-              {props.maxLength && ` / ${props.maxLength}`}
+              {maxLength && ` / ${maxLength}`}
             </InputGroupText>
           )}
         </InputGroupAddon>
@@ -85,7 +86,7 @@ export function Input({
       <FormControl>
         <Comp
           className={cn('min-h-auto text-sm', className)}
-          placeholder={placeholder}
+          {...{ placeholder, maxLength }}
           disabled={disabled || isLoading}
           {...(props as object)}
         />

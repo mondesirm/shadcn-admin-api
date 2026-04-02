@@ -1,6 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { SettingsAccount } from '@/features/settings/account'
+import { AccountSettings } from '@/features/settings/account'
 
 export const Route = createFileRoute('/_authenticated/settings/account')({
-  component: SettingsAccount,
+  component: AccountSettings,
+  beforeLoad: () => ({
+    getTitle: () => 'Account',
+    getDescription: () => 'Manage your account settings',
+  }),
 })

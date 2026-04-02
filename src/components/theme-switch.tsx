@@ -1,5 +1,5 @@
-import { modes, themes } from '@/config/themes'
 import { SunMoon } from 'lucide-react'
+import { modes, themes } from '@/config/themes'
 import { SHORTCUT, useTheme } from '@/context/theme-provider'
 import { Button } from '@/components/ui/button'
 import {

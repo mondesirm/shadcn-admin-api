@@ -1,8 +1,9 @@
-import { useState, type JSX } from 'react'
+import { useState } from 'react'
 import { useLocation, useNavigate, Link } from '@tanstack/react-router'
+import { type Item } from '@/types/data'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import {
   Select,
   SelectContent,
@@ -11,37 +12,35 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-type SidebarNavProps = React.HTMLAttributes<HTMLElement> & {
-  items: {
-    href: string
-    title: string
-    icon: JSX.Element
-  }[]
+type SidebarNavProps = React.ComponentProps<'nav'> & {
+  items: Item[]
 }
 
+// TODO use SelectInput and maybe move it inside the header
 export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
-  const { pathname } = useLocation()
   const navigate = useNavigate()
-  const [val, setVal] = useState(pathname ?? '/settings')
+  const { pathname } = useLocation()
+  const [value, setValue] = useState(pathname ?? '/settings')
 
-  const handleSelect = (e: string) => {
-    setVal(e)
-    navigate({ to: e })
+  const onValueChange = (to: string) => {
+    setValue(to)
+    navigate({ to })
   }
 
   return (
     <>
       <div className='p-1 md:hidden'>
-        <Select value={val} onValueChange={handleSelect}>
+        <Select {...{ value, onValueChange }}>
           <SelectTrigger className='h-12 sm:w-48'>
             <SelectValue placeholder='Theme' />
           </SelectTrigger>
+
           <SelectContent>
-            {items.map((item) => (
-              <SelectItem key={item.href} value={item.href}>
+            {items.map(({ value, label, icon: Icon }) => (
+              <SelectItem key={value} value={value}>
                 <div className='flex gap-x-4 px-2 py-1'>
-                  <span className='scale-125'>{item.icon}</span>
-                  <span className='text-md'>{item.title}</span>
+                  {Icon && <Icon />}
+                  {label}
                 </div>
               </SelectItem>
             ))}
@@ -50,9 +49,8 @@ export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
       </div>
 
       <ScrollArea
-        orientation='horizontal'
-        type='always'
         className='hidden w-full min-w-40 bg-background px-1 py-2 md:block'
+        type='always'
       >
         <nav
           className={cn(
@@ -61,23 +59,25 @@ export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
           )}
           {...props}
         >
-          {items.map((item) => (
+          {items.map(({ value, label, icon: Icon }) => (
             <Link
-              key={item.href}
-              to={item.href}
+              key={value}
+              to={value}
               className={cn(
                 buttonVariants({ variant: 'ghost' }),
-                pathname === item.href
+                pathname === value
                   ? 'bg-muted hover:bg-accent'
                   : 'hover:bg-accent hover:underline',
                 'justify-start'
               )}
             >
-              <span className='me-2'>{item.icon}</span>
-              {item.title}
+              {Icon && <Icon />}
+              {label}
             </Link>
           ))}
         </nav>
+
+        <ScrollBar orientation='horizontal' />
       </ScrollArea>
     </>
   )

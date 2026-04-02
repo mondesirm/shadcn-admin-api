@@ -1,6 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { SettingsProfile } from '@/features/settings/profile'
+import { ProfileSettings } from '@/features/settings/profile'
 
 export const Route = createFileRoute('/_authenticated/settings/')({
-  component: SettingsProfile,
+  component: ProfileSettings,
+  beforeLoad: () => ({
+    getTitle: () => 'Profile',
+    getDescription: () => 'Set up your public profile',
+  }),
 })

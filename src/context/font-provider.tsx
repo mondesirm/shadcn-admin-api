@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { fonts } from '@/config/fonts'
 import { getCookie, removeCookie, setCookie } from '@/lib/cookies'
+import { fonts } from '@/config/fonts'
 
 export type Font = (typeof fonts)[number]['value']
 

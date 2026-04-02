@@ -1,6 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { SettingsDisplay } from '@/features/settings/display'
+import { DisplaySettings } from '@/features/settings/display'
 
 export const Route = createFileRoute('/_authenticated/settings/display')({
-  component: SettingsDisplay,
+  component: DisplaySettings,
+  beforeLoad: () => ({
+    getTitle: () => 'Display',
+    getDescription: () => 'Control what items are displayed',
+  }),
 })

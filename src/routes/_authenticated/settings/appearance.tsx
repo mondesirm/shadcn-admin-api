@@ -3,4 +3,8 @@ import { SettingsAppearance } from '@/features/settings/appearance'
 
 export const Route = createFileRoute('/_authenticated/settings/appearance')({
   component: SettingsAppearance,
+  beforeLoad: () => ({
+    getTitle: () => 'Appearance',
+    getDescription: () => 'Customize the look and feel',
+  }),
 })

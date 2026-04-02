@@ -7,9 +7,9 @@ import {
   useRef,
   useState,
 } from 'react'
-import { themes, modes } from '@/config/themes'
 import { flushSync } from 'react-dom'
 import { getCookie, removeCookie, setCookie } from '@/lib/cookies'
+import { themes, modes } from '@/config/themes'
 
 export type Mode = (typeof modes)[number]['value']
 export type Theme = (typeof themes)[number]['value']

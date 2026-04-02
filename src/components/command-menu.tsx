@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { modes, themes } from '@/config/themes'
 import { ArrowRight, ChevronRight } from 'lucide-react'
+import { modes, themes } from '@/config/themes'
 import { useSearch } from '@/context/search-provider'
 import { useTheme } from '@/context/theme-provider'
 import {
@@ -68,7 +68,6 @@ export function CommandMenu() {
                     <div className='flex size-4 items-center justify-center'>
                       <ArrowRight className='size-2 text-muted-foreground/80' />
                     </div>
-
                     {navItem.title} <ChevronRight /> {subItem.title}
                   </CommandItem>
                 ))

@@ -39,7 +39,7 @@
     "^@/types/(.*)$",
     "^@/lib/(.*)$",
     "^@/utils/(.*)$",
-    "^@/constants/(.*)$",
+    "^@/config/(.*)$",
     "^@/context/(.*)$",
     "^@/hooks/(.*)$",
     "^@/components/layouts/(.*)$",

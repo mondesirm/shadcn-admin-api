@@ -27,18 +27,21 @@ const text = (params?: Parameters<z._ZodString['nonempty']>[0]) =>
 const date = (params?: Parameters<typeof z.coerce.date>[0]) =>
   z.coerce.date<Date>(params)
 
-const past = <P extends Parameters<typeof z.refine>[1]>(params?: P) =>
+const past = <P extends Parameters<typeof z.refine>[1]>(d?: Date, params?: P) =>
   Object.assign(date(params), {
     _refine: <T extends Record<string, Date>>(k: keyof T, params?: P) => [
-      (data: T) => data[k] < (data.createdAt || new Date()),
+      (data: T) => data[k] < (d || data.createdAt || new Date()),
       error('is not in the past', params),
     ],
   })
 
-const future = <P extends Parameters<typeof z.refine>[1]>(params?: P) =>
+const future = <P extends Parameters<typeof z.refine>[1]>(
+  d?: Date,
+  params?: P
+) =>
   Object.assign(date(params), {
     _refine: <T extends Record<string, Date>>(k: keyof T, params?: P) => [
-      (data: T) => data[k] > (data.createdAt || new Date()),
+      (data: T) => data[k] > (d || data.createdAt || new Date()),
       error('is not in the future', params),
     ],
   })
