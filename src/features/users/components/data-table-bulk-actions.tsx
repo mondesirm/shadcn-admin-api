@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { type Table } from '@tanstack/react-table'
 import { CircleArrowUp, Download, Trash2, UserCog } from 'lucide-react'
 import { toast } from 'sonner'
-import { sleep } from '@/lib/utils'
+import { api } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -18,7 +19,7 @@ import {
 } from '@/components/ui/tooltip'
 import { DataTableBulkActions as BulkActionsToolbar } from '@/components/data-table'
 import { roles, statuses } from '../data/enums'
-import { type User } from '../data/schema'
+import { type User, type UserBulk } from '../data/schema'
 import { UsersBulkDeleteDialog } from './users-multi-delete-dialog'
 
 type DataTableBulkActionsProps<TData> = {
@@ -28,32 +29,46 @@ type DataTableBulkActionsProps<TData> = {
 export function DataTableBulkActions<TData>({
   table,
 }: DataTableBulkActionsProps<TData>) {
+  const queryClient = useQueryClient()
+  const [isLoading, setIsLoading] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const selectedRows = table.getFilteredSelectedRowModel().rows
 
   const handleBulkMutate = <T extends keyof User>(k: T, v: User[T]) => {
-    const selectedUsers = selectedRows.map((row) => row.original as User)
+    if (isLoading) return
+    setIsLoading(true)
 
-    toast.promise(sleep(2000), {
-      loading: `Updating ${k}...`,
-      success: () => {
-        table.resetRowSelection()
-        return `Updated ${k} to ${v} for ${selectedUsers.length} user${selectedUsers.length > 1 ? 's' : ''}.`
-      },
-      error: 'Bulk user update failed. Please try again.',
-    })
+    toast.promise(
+      api.put<UserBulk['update']>('users', {
+        [k]: v,
+        ids: selectedRows.map((row) => (row.original as User).id),
+      }),
+      {
+        loading: `Updating ${k}...`,
+        success: ({ count }) => {
+          table.resetRowSelection()
+          queryClient.invalidateQueries({ queryKey: ['users'] })
+          return `Updated ${k} to ${v} for ${count} user${count > 1 ? 's' : ''}.`
+        },
+        error: 'Bulk user update failed. Please try again.',
+        finally: () => setIsLoading(false),
+      }
+    )
   }
 
   const handleBulkExport = () => {
-    const selectedUsers = selectedRows.map((row) => row.original as User)
+    if (isLoading) return
+    setIsLoading(true)
 
-    toast.promise(sleep(2000), {
+    const selectedUsers = selectedRows.map((row) => row.original as User)
+    toast.promise(api.export('users', selectedUsers), {
       loading: 'Exporting users...',
       success: () => {
         table.resetRowSelection()
         return `Exported ${selectedUsers.length} user${selectedUsers.length > 1 ? 's' : ''} to CSV.`
       },
       error: 'User export failed. Please try again.',
+      finally: () => setIsLoading(false),
     })
   }
 
