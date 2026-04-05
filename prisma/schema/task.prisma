@@ -1,0 +1,33 @@
+model Task {
+  id          Int          @id @default(autoincrement())
+  title       String
+  label       TaskLabel    @default(bug)
+  status      TaskStatus   @default(todo)
+  priority    TaskPriority @default(low)
+  dueDate     DateTime?
+  assignee    String?
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now()) @updatedAt
+}
+
+enum TaskLabel {
+  bug
+  feature
+  documentation
+}
+
+enum TaskStatus {
+  backlog
+  todo
+  in_progress
+  canceled
+  done
+}
+
+enum TaskPriority {
+  low
+  medium
+  high
+  critical
+}
