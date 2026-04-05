@@ -2,9 +2,11 @@
 /*
 
 # Except these files & folders
+!/prisma
 !/src
 !index.html
 !package.json
+!prisma.config.ts
 !tailwind.config.js
 !tsconfig.json
 !tsconfig.node.json

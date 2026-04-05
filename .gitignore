@@ -27,3 +27,6 @@ dist-ssr
 
 # Cloud platform directories
 .vercel
+
+# Prisma
+generated
