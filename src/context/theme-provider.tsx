@@ -1,102 +1,207 @@
-import { createContext, useContext, useEffect, useState, useMemo } from 'react'
-import { getCookie, setCookie, removeCookie } from '@/lib/cookies'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
+import { themes, modes } from '@/config/themes'
+import { flushSync } from 'react-dom'
+import { getCookie, removeCookie, setCookie } from '@/lib/cookies'
 
-type Theme = 'dark' | 'light' | 'system'
-type ResolvedTheme = Exclude<Theme, 'system'>
+export type Mode = (typeof modes)[number]['value']
+export type Theme = (typeof themes)[number]['value']
+export type ResolvedMode = Exclude<Mode, 'system'>
+export type ResolvedTheme = Exclude<Theme, 'accent'>
 
-const DEFAULT_THEME = 'system'
-const THEME_COOKIE_NAME = 'vite-ui-theme'
-const THEME_COOKIE_MAX_AGE = 60 * 60 * 24 * 365 // 1 year
+export const DEFAULT_MODE = modes[0].value
+export const DEFAULT_THEME = themes[0].value
+export const MODE_COOKIE_NAME = 'mode'
+export const THEME_COOKIE_NAME = 'theme'
+export const COOKIE_MAX_AGE = 60 * 60 * 24 * 365
+export const SHORTCUT = 'd'
 
 type ThemeProviderProps = {
-  children: React.ReactNode
+  defaultMode?: Mode
   defaultTheme?: Theme
-  storageKey?: string
+  modeStorageKey?: string
+  themeStorageKey?: string
+  options?: KeyframeAnimationOptions
+  children: React.ReactNode
 }
 
-type ThemeProviderState = {
-  defaultTheme: Theme
-  resolvedTheme: ResolvedTheme
+type ThemeContextState = {
+  ref: React.RefObject<HTMLButtonElement | null>
+  mode: Mode
   theme: Theme
+  defaultMode: Mode
+  resolvedMode: ResolvedMode
+  defaultTheme: Theme
   setTheme: (theme: Theme) => void
+  setMode: (mode: Mode) => void
+  resetMode: () => void
   resetTheme: () => void
 }
 
-const initialState: ThemeProviderState = {
-  defaultTheme: DEFAULT_THEME,
-  resolvedTheme: 'light',
-  theme: DEFAULT_THEME,
-  setTheme: () => null,
-  resetTheme: () => null,
-}
-
-const ThemeContext = createContext<ThemeProviderState>(initialState)
+const ThemeContext = createContext<ThemeContextState | null>(null)
 
 export function ThemeProvider({
-  children,
+  defaultMode = DEFAULT_MODE,
   defaultTheme = DEFAULT_THEME,
-  storageKey = THEME_COOKIE_NAME,
+  modeStorageKey = MODE_COOKIE_NAME,
+  themeStorageKey = THEME_COOKIE_NAME,
+  options,
   ...props
 }: ThemeProviderProps) {
-  const [theme, _setTheme] = useState<Theme>(
-    () => (getCookie(storageKey) as Theme) || defaultTheme
+  const ref = useRef<HTMLButtonElement>(null)
+
+  const [mode, _setMode] = useState<Mode>(
+    () => getCookie(modeStorageKey) || defaultMode
   )
 
-  // Optimized: Memoize the resolved theme calculation to prevent unnecessary re-computations
-  const resolvedTheme = useMemo((): ResolvedTheme => {
-    if (theme === 'system') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light'
-    }
-    return theme as ResolvedTheme
-  }, [theme])
+  const [theme, _setTheme] = useState<Theme>(
+    () => getCookie(themeStorageKey) || defaultTheme
+  )
+
+  const resolvedMode = useMemo((): ResolvedMode => {
+    if (mode !== 'system') return mode
+    return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }, [mode])
 
   useEffect(() => {
-    const root = window.document.documentElement
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const root = document.documentElement
+    const meta = document.querySelector('meta[name=theme-color]')
+    const mediaQuery = matchMedia('(prefers-color-scheme: dark)')
 
-    const applyTheme = (currentResolvedTheme: ResolvedTheme) => {
-      root.classList.remove('light', 'dark') // Remove existing theme classes
-      root.classList.add(currentResolvedTheme) // Add the new theme class
+    const apply = (mode: ResolvedMode) => {
+      modes.forEach((s) => root.classList.remove(s.value))
+      root.classList.add(mode)
+
+      const color = getComputedStyle(root).getPropertyValue('--background')
+      if (meta) meta.setAttribute('content', color)
     }
 
-    const handleChange = () => {
-      if (theme === 'system') {
-        const systemTheme = mediaQuery.matches ? 'dark' : 'light'
-        applyTheme(systemTheme)
+    const onChange = () => mode === 'system' && apply(resolvedMode)
+
+    apply(resolvedMode)
+    mediaQuery.addEventListener('change', onChange)
+
+    return () => mediaQuery.removeEventListener('change', onChange)
+  }, [mode, resolvedMode])
+
+  useEffect(() => {
+    const root = document.documentElement
+
+    themes.forEach((s) => root.classList.remove(s.value))
+    root.classList.add(theme)
+  }, [theme])
+
+  const animate = useCallback(
+    (fn: () => void) => {
+      if (!ref.current) return fn()
+
+      const { top, left, width, height } = ref.current.getBoundingClientRect()
+      const [x, y] = [left + width / 2, top + height / 2]
+      const vw = visualViewport?.width ?? innerWidth
+      const vh = visualViewport?.height ?? innerHeight
+      const radius = Math.hypot(Math.max(x, vw - x), Math.max(y, vh - y))
+
+      if (!document.startViewTransition) return fn()
+
+      const root = document.documentElement
+      root.setAttribute('data-transition', 'true')
+
+      const transition = document.startViewTransition(() => flushSync(fn))
+
+      transition.ready.then(() =>
+        root.animate(
+          {
+            clipPath: [
+              `circle(0px at ${x}px ${y}px)`,
+              `circle(${radius}px at ${x}px ${y}px)`,
+            ],
+          },
+          {
+            duration: 400,
+            easing: 'ease-in-out',
+            pseudoElement: '::view-transition-new(root)',
+            ...options,
+          }
+        )
+      )
+
+      transition.finished.finally(() => root.removeAttribute('data-transition'))
+    },
+    [options]
+  )
+
+  const setMode = useCallback(
+    (mode: Mode) => {
+      const apply = () => {
+        _setMode(mode)
+        setCookie(modeStorageKey, mode, COOKIE_MAX_AGE)
       }
-    }
 
-    applyTheme(resolvedTheme)
+      if (mode === resolvedMode) return apply()
+      animate(apply)
+    },
+    [animate, modeStorageKey, resolvedMode]
+  )
 
-    mediaQuery.addEventListener('change', handleChange)
+  const setTheme = useCallback(
+    (theme: Theme) => {
+      const apply = () => {
+        _setTheme(theme)
+        setCookie(themeStorageKey, theme, COOKIE_MAX_AGE)
+      }
 
-    return () => mediaQuery.removeEventListener('change', handleChange)
-  }, [theme, resolvedTheme])
+      animate(apply)
+    },
+    [animate, themeStorageKey]
+  )
 
-  const setTheme = (theme: Theme) => {
-    setCookie(storageKey, theme, THEME_COOKIE_MAX_AGE)
-    _setTheme(theme)
+  const resetMode = () => {
+    _setMode(DEFAULT_MODE)
+    removeCookie(modeStorageKey)
   }
 
   const resetTheme = () => {
-    removeCookie(storageKey)
     _setTheme(DEFAULT_THEME)
+    removeCookie(themeStorageKey)
   }
 
-  const contextValue = {
-    defaultTheme,
-    resolvedTheme,
-    resetTheme,
-    theme,
-    setTheme,
-  }
+  useEffect(() => {
+    const root = document.documentElement
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === SHORTCUT && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault()
+        setMode(root.classList.contains('dark') ? 'light' : 'dark')
+      }
+    }
+
+    addEventListener('keydown', onKeyDown)
+    return () => removeEventListener('keydown', onKeyDown)
+  }, [setMode])
 
   return (
-    <ThemeContext value={contextValue} {...props}>
-      {children}
-    </ThemeContext>
+    <ThemeContext
+      value={{
+        ref,
+        mode,
+        theme,
+        defaultMode,
+        resolvedMode,
+        defaultTheme,
+        setMode,
+        setTheme,
+        resetMode,
+        resetTheme,
+      }}
+      {...props}
+    />
   )
 }
 
@@ -104,7 +209,6 @@ export function ThemeProvider({
 export const useTheme = () => {
   const context = useContext(ThemeContext)
 
-  if (!context) throw new Error('useTheme must be used within a ThemeProvider')
-
-  return context
+  if (context) return context
+  throw new Error('useTheme must be used within a ThemeProvider')
 }

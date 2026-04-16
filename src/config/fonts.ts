@@ -1,3 +1,5 @@
+import { type Item } from '@/types/data'
+
 /**
  * List of available font names (visit the url `/settings/appearance`).
  * This array is used to generate dynamic font classes (e.g., `font-inter`, `font-manrope`).
@@ -16,4 +18,11 @@
  *      --font-roboto: 'Roboto', var(--font-sans);
  *   }
  */
-export const fonts = ['inter', 'manrope', 'system'] as const
+export const fonts = [
+  { value: 'geist', label: 'Geist' },
+  { value: 'geist-mono', label: 'Geist Mono' },
+  { value: 'montserrat', label: 'Montserrat' },
+  { value: 'inter', label: 'Inter' },
+  { value: 'manrope', label: 'Manrope' },
+  { value: 'system', label: 'System' },
+] as const satisfies Item[]

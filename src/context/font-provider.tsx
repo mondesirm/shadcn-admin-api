@@ -1,58 +1,70 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { fonts } from '@/config/fonts'
-import { getCookie, setCookie, removeCookie } from '@/lib/cookies'
+import { getCookie, removeCookie, setCookie } from '@/lib/cookies'
 
-type Font = (typeof fonts)[number]
+export type Font = (typeof fonts)[number]['value']
 
-const FONT_COOKIE_NAME = 'font'
-const FONT_COOKIE_MAX_AGE = 60 * 60 * 24 * 365 // 1 year
+export const DEFAULT = fonts[0].value
+export const COOKIE_NAME = 'font'
+export const COOKIE_MAX_AGE = 60 * 60 * 24 * 365
 
-type FontContextType = {
+type FontProviderProps = {
+  storageKey?: string
+  defaultFont?: Font
+  children: React.ReactNode
+}
+
+type FontContextState = {
   font: Font
+  defaultFont: Font
   setFont: (font: Font) => void
   resetFont: () => void
 }
 
-const FontContext = createContext<FontContextType | null>(null)
+const FontContext = createContext<FontContextState | null>(null)
 
-export function FontProvider({ children }: { children: React.ReactNode }) {
-  const [font, _setFont] = useState<Font>(() => {
-    const savedFont = getCookie(FONT_COOKIE_NAME)
-    return fonts.includes(savedFont as Font) ? (savedFont as Font) : fonts[0]
-  })
+export function FontProvider({
+  defaultFont = DEFAULT,
+  storageKey = COOKIE_NAME,
+  ...props
+}: FontProviderProps) {
+  const [font, _setFont] = useState<Font>(
+    () => getCookie(storageKey) || defaultFont
+  )
 
   useEffect(() => {
-    const applyFont = (font: string) => {
-      const root = document.documentElement
-      root.classList.forEach((cls) => {
-        if (cls.startsWith('font-')) root.classList.remove(cls)
-      })
+    const root = document.documentElement
+
+    const apply = (font: Font) => {
+      root.classList.forEach(
+        (cls) => cls.startsWith('font-') && root.classList.remove(cls)
+      )
+
       root.classList.add(`font-${font}`)
     }
 
-    applyFont(font)
+    apply(font)
   }, [font])
 
   const setFont = (font: Font) => {
-    setCookie(FONT_COOKIE_NAME, font, FONT_COOKIE_MAX_AGE)
     _setFont(font)
+    setCookie(COOKIE_NAME, font, COOKIE_MAX_AGE)
   }
 
   const resetFont = () => {
-    removeCookie(FONT_COOKIE_NAME)
-    _setFont(fonts[0])
+    _setFont(DEFAULT)
+    removeCookie(COOKIE_NAME)
   }
 
   return (
-    <FontContext value={{ font, setFont, resetFont }}>{children}</FontContext>
+    <FontContext value={{ font, defaultFont, setFont, resetFont }} {...props} />
   )
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useFont = () => {
   const context = useContext(FontContext)
-  if (!context) {
-    throw new Error('useFont must be used within a FontProvider')
-  }
-  return context
+
+  if (context) return context
+  throw new Error('useFont must be used within a FontProvider')
 }

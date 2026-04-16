@@ -1,29 +1,32 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { CommandMenu } from '@/components/command-menu'
 
-type SearchContextType = {
-  open: boolean
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>
-}
-
-const SearchContext = createContext<SearchContextType | null>(null)
+export const SHORTCUT = 'k'
 
 type SearchProviderProps = {
   children: React.ReactNode
 }
 
+type SearchContextState = {
+  open: boolean
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>
+}
+
+const SearchContext = createContext<SearchContextState | null>(null)
+
 export function SearchProvider({ children }: SearchProviderProps) {
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === SHORTCUT && (e.ctrlKey || e.metaKey)) {
         e.preventDefault()
         setOpen((open) => !open)
       }
     }
-    document.addEventListener('keydown', down)
-    return () => document.removeEventListener('keydown', down)
+
+    addEventListener('keydown', onKeyDown)
+    return () => removeEventListener('keydown', onKeyDown)
   }, [])
 
   return (
@@ -36,11 +39,8 @@ export function SearchProvider({ children }: SearchProviderProps) {
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useSearch = () => {
-  const searchContext = useContext(SearchContext)
+  const context = useContext(SearchContext)
 
-  if (!searchContext) {
-    throw new Error('useSearch has to be used within SearchProvider')
-  }
-
-  return searchContext
+  if (context) return context
+  throw new Error('useSearch must be used within a SearchProvider')
 }
