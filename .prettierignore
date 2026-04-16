@@ -14,5 +14,8 @@
 !eslint.config.js
 !postcss.config.js
 
+# Ignore shared UI components
+/src/components/ui
+
 # Ignore auto generated routeTree.gen.ts
 /src/routeTree.gen.ts
