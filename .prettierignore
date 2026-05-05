@@ -2,6 +2,7 @@
 /*
 
 # Except these files & folders
+!/api
 !/prisma
 !/src
 !index.html

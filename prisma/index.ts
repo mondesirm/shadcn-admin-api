@@ -1,6 +1,6 @@
-import { env } from '@/env'
 import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from 'generated/prisma/client'
+import { PrismaClient } from '../generated/prisma/client.js'
+import { env } from '../src/env.js'
 
 declare global {
   var prisma: PrismaClient
